@@ -1,0 +1,40 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Transform: 'Aliyun::Serverless-2018-04-03'
+Resources:
+  AboutMePage:
+    Type: 'Aliyun::Serverless::Service'
+    Properties:
+      Description: 'Function Compute Service for the About Page'
+      Policies:
+      - AliyunOTSFullAccess
+    visits:
+      Type: 'Aliyun::Serverless::Function'
+      Properties:
+        Handler: visits.handler
+        Runtime: nodejs8
+        CodeUri: './'
+        Timeout: 10
+        EnvironmentVariables:
+          InstanceName: AboutMePageOTS
+          TableName: visitsTable
+  AboutMePageOTS:
+    Type: 'Aliyun::Serverless::TableStore'
+    Properties:
+      ClusterType: HYBRID
+      Description: 'Table used to store visits'
+    visitsTable:
+      Type: 'Aliyun::Serverless::TableStore::Table'
+      Properties:
+        PrimaryKeyList:
+        - Name: count_name
+          Type: STRING
+  AboutMeAPI:
+    Type: 'Aliyun::Serverless::Api'
+    Properties:
+      StageName: RELEASE
+      DefinitionBody:
+        '/visits':
+          get:
+            x-aliyun-apigateway-api-name: visits_get
+            x-aliyun-apigateway-fc:
+              arn: acs:fc:::services/${AboutMePage.Arn}/functions/${visits.Arn}/
